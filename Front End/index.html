@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Attendance Management App</title>
+
+    <style>
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+      }
+
+      button.secondary {
+        background-color: #008CBA;
+      }
+
+      #searchContainer,
+      #attendanceFormContainer,
+      #attendanceSummaryContainer {
+        margin-top: 20px;
+      }
+    </style>
   </head>
   <body>
     <h2>Attendance Management</h2>
@@ -12,7 +34,7 @@
       <label for="searchDate">Select Date:</label>
       <input type="date" id="searchDate" required />
       <button onclick="searchAttendance()">Search</button>
-      <button onclick="fetchAttendanceReport()">Fetch Attendance Report</button>
+      <button class="secondary" onclick="fetchAttendanceReport()">Fetch Attendance Report</button>
     </div>
 
     <div id="attendanceFormContainer" style="display: none">
@@ -30,6 +52,10 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
+      function fetchAttendanceReport() {
+        console.log("great job");
+      }
+
       function searchAttendance() {
         const searchDate = document.getElementById("searchDate").value;
         const formContainer = document.getElementById(
@@ -47,8 +73,6 @@
         axios
           .get(`http://localhost:3000/user/getAttendance?date=${searchDate}`)
           .then(function (response) {
-            console.log("Response from server:", response.data);
-
             const attendanceData = response.data;
 
             if (attendanceData.length > 0) {
@@ -76,12 +100,13 @@
                 "Aniket",
               ];
               let radioButtonsHTML = "";
-              for (const studentName of studentNames) {
+              for (let i = 0; i < studentNames.length; i++) {
+                const studentName = studentNames[i];
                 radioButtonsHTML += `
-                        <label>${studentName}:</label><br>
-                        <input type="radio" name="attendance_${studentName}" value="present" checked> Present
-                        <input type="radio" name="attendance_${studentName}" value="absent"> Absent<br>
-                        <br>`;
+        <label>${studentName}:</label><br>
+        <input type="radio" name="attendance_${studentName}" value="present" checked> Present
+        <input type="radio" name="attendance_${studentName}" value="absent"> Absent<br>
+        <br>`;
               }
 
               attendanceForm.innerHTML = radioButtonsHTML;
@@ -106,7 +131,7 @@
         const uniqueStudentNames = new Set();
 
         radios.forEach((radio) => {
-          const studentName = radio.name.replace("attendance_", "");
+          const studentName = radio.name.split("_")[1];
 
           if (!uniqueStudentNames.has(studentName)) {
             const status = radio.checked ? "present" : "absent";
@@ -134,7 +159,7 @@
         axios
           .get("http://localhost:3000/user/fetchAttendanceReport")
           .then(function (response) {
-            console.log("Attendance report:", response.data);
+            console.log("Attendance report is here:", response.data);
 
             displayAttendanceReport(response.data);
           })
@@ -145,6 +170,7 @@
       }
 
       function displayAttendanceReport(attendanceReport) {
+        console.log("attendance Report is", attendanceReport);
         const summaryContainer = document.getElementById(
           "attendanceSummaryContainer"
         );
@@ -152,18 +178,21 @@
 
         summaryList.innerHTML = "";
 
-        for (const studentID in attendanceReport) {
+        const studentIDs = Object.keys(attendanceReport);
+
+        for (let i = 0; i < studentIDs.length; i++) {
+          const studentID = studentIDs[i];
           const studentInfo = attendanceReport[studentID];
           const { studentName, totalDays, presentDays } = studentInfo;
 
           const listItem = document.createElement("li");
-          listItem.textContent = `${studentName}: ${presentDays}/${totalDays} days (${(
-            (presentDays / totalDays) *
-            100
-          ).toFixed(2)}%)`;
+          const percentage = Math.round((presentDays / totalDays) * 100);
+          listItem.textContent = `${studentName}: ${presentDays}/${totalDays} days (${percentage}%)`;
 
           summaryList.appendChild(listItem);
         }
+
+        summaryContainer.style.display = "block";
 
         summaryContainer.style.display = "block";
       }
