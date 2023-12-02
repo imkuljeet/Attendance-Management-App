@@ -148,6 +148,7 @@
           .then(function (response) {
             console.log(response.data);
             alert("Attendance marked successfully!");
+            searchAttendance();
           })
           .catch(function (error) {
             console.error("Error marking attendance:", error);
